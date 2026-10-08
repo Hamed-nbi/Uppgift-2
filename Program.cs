@@ -1,3 +1,6 @@
+Console.InputEncoding = System.Text.Encoding.UTF8;
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 ShoppingList list = new ShoppingList("items.txt", 1000);
 try
 {
@@ -20,7 +23,7 @@ while (true)
 {
     Console.WriteLine();
     list.Print();
-    Console.WriteLine("\n1. Lägg till vara\n2. Ta bort vara\n3. Spara\n4. Sök vara\n5. Avsluta");
+    Console.WriteLine("\n1. Lägg till vara\n2. Ta bort vara\n3. Spara\n4. Sök vara\n5. Avsluta (spara först med 3)");
     Console.Write("Välj: ");
     string input = Console.ReadLine();
     if (input == null)
