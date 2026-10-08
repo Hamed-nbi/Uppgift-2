@@ -1,93 +1,92 @@
-// Holds the items and takes care of loading and saving them.
 class ShoppingList
 {
-    private List<Item> items = new List<Item>();
-    private string path;
+    private readonly List<Item> items = new();
+    private readonly string path;
+    public int Budget { get; }
 
-    public ShoppingList(string path)
+    public ShoppingList(string path, int budget)
     {
+        if (budget < 0)
+            throw new ArgumentOutOfRangeException(nameof(budget));
         this.path = path;
+        Budget = budget;
     }
 
-    public void Add(Item item)
+    public bool Add(Item item)
     {
+        // Subtraktion undviker overflow även vid ett mycket stort pris.
+        if (item.Price > Budget - Total())
+            return false;
         items.Add(item);
+        return true;
     }
 
-    // Removes the item the user sees as number 1, 2, 3 ...
-    public void RemoveAt(int number)
+    public bool RemoveAt(int number)
     {
+        if (number < 1 || number > items.Count)
+            return false;
         items.RemoveAt(number - 1);
+        return true;
     }
 
-    // Adds up the price of every item on the list.
     public int Total()
     {
         int sum = 0;
-
-        for (int i = 1; i < items.Count; i++)
-        {
-            sum += items[i].Price;
-        }
-
+        foreach (Item item in items)
+            sum += item.Price;
         return sum;
     }
 
-    // Looks up an item by its name. Returns null if there is no such item.
     public Item Find(string name)
     {
         foreach (Item item in items)
-        {
-            if (item.Name == name)
-            {
+            if (string.Equals(item.Name, name?.Trim(), StringComparison.OrdinalIgnoreCase))
                 return item;
-            }
-        }
-
         return null;
     }
 
     public void Print()
     {
         for (int i = 0; i < items.Count; i++)
-        {
             Console.WriteLine($"{i + 1}. {items[i]}");
-        }
-
-        Console.WriteLine($"Totalt: {Total()} kr");
+        Console.WriteLine($"Totalt: {Total()} kr. Budget: {Budget} kr.");
     }
 
-    // Writes one item per line, as "price;name".
+    // Endast första semikolonet skiljer pris från namn.
     public void Save()
     {
-        List<string> lines = new List<string>();
-
+        List<string> lines = new();
         foreach (Item item in items)
-        {
             lines.Add($"{item.Price};{item.Name}");
-        }
-
-        try
-        {
-            File.WriteAllText(path, string.Join("\r\n", lines) + "\r\n");
-        }
-        catch
-        {
-        }
-
-        Console.WriteLine("Listan är sparad.");
+        File.WriteAllLines(path, lines);
     }
 
-    // Reads the file back into the list.
     public void Load()
     {
-        string text = File.ReadAllText(path);
-        string[] lines = text.Split('\n');
-
-        foreach (string line in lines)
+        // Läs klart innan den befintliga listan ändras vid ett läsfel.
+        string[] lines = File.ReadAllLines(path);
+        items.Clear();
+        for (int i = 0; i < lines.Length; i++)
         {
-            string[] parts = line.Split(';');
-            items.Add(new Item(parts[1], int.Parse(parts[0])));
+            string line = lines[i];
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            string[] parts = line.Split(';', 2);
+            if (parts.Length != 2 || !int.TryParse(parts[0], out int price))
+            {
+                Console.WriteLine($"Rad {i + 1} har fel format och hoppades över.");
+                continue;
+            }
+            try
+            {
+                if (!Add(new Item(parts[1], price)))
+                    Console.WriteLine($"Rad {i + 1} överskrider budgeten och hoppades över.");
+            }
+            catch (ArgumentException error)
+            {
+                // Även ArgumentOutOfRangeException är en ArgumentException.
+                Console.WriteLine($"Rad {i + 1} hoppades över: {error.Message}");
+            }
         }
     }
 }
