@@ -1,7 +1,3 @@
-# Robust inköpslista
-
-Ett konsolprogram i C# med sparning och budgettak på 1 000 kr. Kräver .NET 10 SDK. Kör `dotnet run` från projektmappen. Priser anges i hela kronor. Välj 3 för att spara innan du avslutar. Filen `items.txt` ligger i den aktuella arbetsmappen.
-
 ## Felrapport – sex fel
 
 1. **Krasch vid inläsning.** `Split('\n')` gav en tom sista rad, som saknade `parts[1]`. `ReadAllLines` och kontroll av tomma rader, antal delar och `TryParse` gör inläsningen robust. Det gamla sättet lämnade också kvar `\r` i namnet på Windows, så sökning efter den synliga varan misslyckades. Radsluten tas nu bort och namn trimmas. Sökningen ignorerar dessutom stora och små bokstäver.
@@ -51,21 +47,3 @@ classDiagram
     Program --> Item : skapar
     ShoppingList "1" *-- "0..*" Item : innehåller
 ```
-
-## Förstå lösningen
-
-Följ en vara från inmatningen: TryParse kontrollerar att priset är ett heltal, konstruktorn kontrollerar att värdena är giltiga och Add kontrollerar budgeten. Dessa kontroller har olika ansvar. Save skriver filen; Program.cs ansvarar för meddelandet till användaren.
-
-Läs igenom koden och förklara med egna ord varför en ogiltig vara ger ett undantag medan överskriden budget ger false, hur listans nummer översätts till index och varför sparbekräftelsen ligger efter Save.
-
-## GitHub
-
-Projektet har lokal Git-historik med orörd startkod i första commiten. Det är ännu inte publicerat. Öppna projektmappen i VS Code och välj **Publish to GitHub**, sedan publikt repo. Kontrollera länken i en inkognitoflik. Commits skapade med assistans använder tills vidare namnet Student och adressen student@localhost; ställ in dina egna Git-uppgifter för fortsatt arbete. Historiken visar assistentens arbetssteg och ska inte beskrivas som eget manuellt arbete. Läs och förstå lösningen före inlämning.
-
-`bin/` och `obj/` är gitignorade.
-
-## Verifiering
-
-`dotnet build` lyckades med 0 fel och 0 varningar. Före sista UTF-8-ändringen verifierades felaktig meny/pris/nummer, saknad fil, tomt namn, negativt pris, exakt budget och avvisat för stort pris. Omstartstestet upptäckte teckenkodningsproblemet, vilket ledde till UTF-8-ändringen. Den senaste versionen kunde byggas, men Windows Application Control blockerade körningen av den nya Shopping.dll. Därför är fullständig omstart/sökning och sparfel ännu inte verifierade i senaste versionen.
-
-Kontrollera lokalt med `dotnet run`: lägg till Mjölk, spara, avsluta, starta om och sök på mjölk. Kontrollera summan 136 kr i startlistan. Testa bokstäver, mycket stora tal, negativt pris, tomt namn och ogiltiga nummer. Testa en vara som når budgeten exakt och en som överskrider den. Testa även felaktiga filrader och att ett sparfel aldrig ger beskedet att listan är sparad.
